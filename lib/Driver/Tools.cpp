@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -3993,5 +3994,152 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec =
     Args.MakeArgString(getToolChain().GetProgramPath("link.exe"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+/// TMS320C64X Tools
+
+// XXX we currently don't support any TMS320C64X tools in the clang driver
+void tms320c64x::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                        //Job &Dest, 
+                                        const InputInfo &Output,
+                                        const InputInfoList &Inputs,
+                                        const ArgList &Args,
+                                        const char *LinkingOutput) const {
+  llvm_unreachable("c64x tools not supported");
+
+  ArgStringList CmdArgs;
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  // FIXME: JE: is this ok?
+  //CmdArgs.push_back("-o");
+  //if (Output.isPipe())
+  //  CmdArgs.push_back("-");
+  //else
+  //  CmdArgs.push_back(Output.getFilename());
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    // FIXME: JE: is this ok?
+    //if (II.isPipe())
+    //  CmdArgs.push_back("-");
+    //else
+    CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("tic64x-as"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+void tms320c64x::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                 //Job &Dest, 
+                                 const InputInfo &Output,
+                                 const InputInfoList &Inputs,
+                                 const ArgList &Args,
+                                 const char *LinkingOutput) const {
+  llvm_unreachable("c64x tools not supported");
+  const Driver &D = getToolChain().getDriver();
+  ArgStringList CmdArgs;
+  // FIXME: JE: is this ok?
+  //if (Output.isPipe()) {
+  //  CmdArgs.push_back("-o");
+  //  CmdArgs.push_back("-");
+  //} else 
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+
+    // Don't try to pass LLVM inputs to a generic gcc.
+    // FIXME: JE: should we really check for other llvm types (ir,lto,etc..)?
+    if (II.getType() == types::TY_LLVM_IR ||
+        II.getType() == types::TY_LTO_IR ||
+        II.getType() == types::TY_LLVM_BC ||
+        II.getType() == types::TY_LTO_BC)
+      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
+        << getToolChain().getTripleString();
+
+    // FIXME: JE: is this ok?
+    //if (II.isPipe())
+    //  CmdArgs.push_back("-");
+    //else 
+    if (II.isFilename())
+      CmdArgs.push_back(II.getFilename());
+    else
+      II.getInputArg().renderAsInput(Args, CmdArgs);
+  }
+
+  /*if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    // FIXME: GCC passes on -lgcc, -lgcc_pic and a whole lot of
+    //         rpaths
+    CmdArgs.push_back("-L/usr/lib/gcc41");
+
+    if (!Args.hasArg(options::OPT_static)) {
+      CmdArgs.push_back("-rpath");
+      CmdArgs.push_back("/usr/lib/gcc41");
+
+      CmdArgs.push_back("-rpath-link");
+      CmdArgs.push_back("/usr/lib/gcc41");
+
+      CmdArgs.push_back("-rpath");
+      CmdArgs.push_back("/usr/lib");
+
+      CmdArgs.push_back("-rpath-link");
+      CmdArgs.push_back("/usr/lib");
+    }
+
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-lgcc_pic");
+    } else {
+      CmdArgs.push_back("-lgcc");
+    }
+
+
+    if (Args.hasArg(options::OPT_pthread))
+      CmdArgs.push_back("-lpthread");
+
+    if (!Args.hasArg(options::OPT_nolibc)) {
+      CmdArgs.push_back("-lc");
+    }
+
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-lgcc_pic");
+    } else {
+      CmdArgs.push_back("-lgcc");
+    }
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtend.o")));
+    else
+      CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtendS.o")));
+    CmdArgs.push_back(Args.MakeArgString(getToolChain().GetFilePath(C, "crtn.o")));
+  }*/
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("tic64x-ld"));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }

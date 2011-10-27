@@ -524,6 +524,57 @@ ToolChain *DragonFlyHostInfo::CreateToolChain(const ArgList &Args,
   return TC;
 }
 
+// TMS320C64X Host Info
+
+/// TMS320C64XHostInfo -  TMS320C64X host information implementation.
+class TMS320C64XHostInfo : public HostInfo {
+  /// Cache of tool chains we have created.
+  mutable llvm::StringMap<ToolChain*> ToolChains;
+
+public:
+  TMS320C64XHostInfo(const Driver &D, const llvm::Triple& Triple)
+    : HostInfo(D, Triple) {}
+  ~TMS320C64XHostInfo();
+
+  virtual bool useDriverDriver() const;
+
+  virtual types::ID lookupTypeForExtension(const char *Ext) const {
+    return types::lookupTypeForExtension(Ext);
+  }
+
+  virtual ToolChain *CreateToolChain(const ArgList &Args,
+                                     const char *ArchName) const;
+};
+
+TMS320C64XHostInfo::~TMS320C64XHostInfo() {
+#if 0
+  for (llvm::StringMap<ToolChain*>::iterator
+         it = ToolChains.begin(), ie = ToolChains.end(); it != ie; ++it)
+    delete it->second;
+#endif
+}
+
+bool TMS320C64XHostInfo::useDriverDriver() const {
+  return false;
+}
+
+ToolChain *TMS320C64XHostInfo::CreateToolChain(const ArgList &Args,
+                                              const char *ArchName) const {
+  assert(!ArchName &&
+         "Unexpected arch name on platform without driver driver support.");
+
+  ToolChain *&TC = ToolChains[getArchName()];
+
+  if (!TC) {
+    llvm::Triple TCTriple(getTriple());
+    TCTriple.setArchName(getArchName());
+
+    TC = new toolchains::TMS320C64X(*this, TCTriple);
+  }
+
+  return TC;
+}
+
 // Linux Host Info
 
 /// LinuxHostInfo -  Linux host information implementation.
@@ -680,6 +731,12 @@ const HostInfo *
 clang::driver::createFreeBSDHostInfo(const Driver &D,
                                      const llvm::Triple& Triple) {
   return new FreeBSDHostInfo(D, Triple);
+}
+
+const HostInfo *
+clang::driver::createTMS320C64XHostInfo(const Driver &D,
+                                        const llvm::Triple& Triple) {
+  return new TMS320C64XHostInfo(D, Triple);
 }
 
 const HostInfo *

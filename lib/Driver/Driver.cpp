@@ -77,6 +77,7 @@ Driver::Driver(llvm::StringRef _ClangExecutable,
     CCCClangArchs.insert(llvm::Triple::x86);
     CCCClangArchs.insert(llvm::Triple::x86_64);
     CCCClangArchs.insert(llvm::Triple::arm);
+    CCCClangArchs.insert(llvm::Triple::tms320c64x);
 
     if (!CXXIsProduction)
       CCCUseClangCXX = false;
@@ -1338,6 +1339,9 @@ const HostInfo *Driver::GetHostInfo(const char *TripleStr) const {
   // TCE is an osless target
   if (Triple.getArchName() == "tce")
     return createTCEHostInfo(*this, Triple);
+
+  if (Triple.getArchName() == "tms320c64x")
+    return createTMS320C64XHostInfo(*this, Triple);
 
   switch (Triple.getOS()) {
   case llvm::Triple::AuroraUX:

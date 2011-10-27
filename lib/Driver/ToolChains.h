@@ -334,6 +334,14 @@ public:
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
 };
 
+// FIXME:class LLVM_LIBRARY_VISIBILITY TMS320C64X : public Generic_ELF {
+class LLVM_LIBRARY_VISIBILITY TMS320C64X : public Generic_GCC {
+public:
+  TMS320C64X(const HostInfo &Host, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA) const;
+};
+
 class LLVM_LIBRARY_VISIBILITY Linux : public Generic_ELF {
 public:
   Linux(const HostInfo &Host, const llvm::Triple& Triple);

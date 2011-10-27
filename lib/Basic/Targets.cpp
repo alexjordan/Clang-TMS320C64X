@@ -2145,6 +2145,73 @@ public:
 } // end anonymous namespace.
 
 namespace {
+  class TMS320C64XTargetInfo : public TargetInfo{
+  public:
+    TMS320C64XTargetInfo(const std::string& triple) : TargetInfo(triple) {
+      TLSSupported = false;
+      IntWidth = 32;
+      LongWidth = 32;
+      LongLongWidth = 64;
+      IntAlign = 32;
+      LongAlign = 32;
+      LongLongAlign = 64;
+      PointerAlign = 32;
+      SizeType = UnsignedInt;
+      IntMaxType = SignedLongLong;
+      UIntMaxType = UnsignedLongLong;
+      IntPtrType = SignedInt;
+      PtrDiffType = SignedInt;
+      SigAtomicType = SignedInt;
+      FloatWidth = 32;
+      FloatAlign = 32;
+      DoubleWidth = 64;
+      DoubleAlign = 64;
+      LongDoubleWidth = 64;
+      LongDoubleAlign = 64;
+      FloatFormat      = &llvm::APFloat::IEEEsingle;
+      DoubleFormat     = &llvm::APFloat::IEEEdouble;
+      LongDoubleFormat = &llvm::APFloat::IEEEdouble;
+      DescriptionString = "e-p:32:32:32-i8:8:8-i16:16:16-i32:32:32-f32:32:32-f64:64:64-n32";
+    }
+    virtual uint64_t getPointerWidthV(unsigned AddrSpace) const { return 32; }
+    virtual uint64_t getPointerAlignV(unsigned AddrSpace) const { return 32; }
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  MacroBuilder &Builder) const {
+      Builder.defineMacro("__tms320c64x");
+      Builder.defineMacro("__tic64x");
+      Builder.defineMacro("__TMS320C64X__");
+      Builder.defineMacro("__TIC64X__");
+
+      Builder.defineMacro("__LITTLE_ENDIAN__");
+      Builder.defineMacro("__TI_32BIT_LONG__");
+    }
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {
+      NumRecords = 0;
+    }
+    virtual const char *getVAListDeclaration() const {
+      return "typedef char* __builtin_va_list;";
+    }
+    virtual const char *getClobbers() const {
+      return "";
+    }
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const {
+      NumNames = 0;
+    }
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo& info) const {
+      return true;
+    }
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {
+      NumAliases = 0;
+    }
+    virtual bool useGlobalsForAutomaticVariables() const {return false;}
+  };
+}
+
+namespace {
   class MSP430TargetInfo : public TargetInfo {
     static const char * const GCCRegNames[];
   public:
@@ -2603,6 +2670,9 @@ static TargetInfo *AllocateTarget(const std::string &T) {
     if (os == llvm::Triple::Linux)
       return new LinuxTargetInfo<MipsTargetInfo>(T);
     return new MipsTargetInfo(T);
+
+  case llvm::Triple::tms320c64x:
+    return new TMS320C64XTargetInfo(T);
 
   case llvm::Triple::mipsel:
     if (os == llvm::Triple::Psp)

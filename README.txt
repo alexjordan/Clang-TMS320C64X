@@ -24,3 +24,20 @@ on the Clang development mailing list:
 
 If you find a bug in Clang, please file it in the LLVM bug tracker:
   http://llvm.org/bugs/
+
+--------------------------------
+
+This branch contains modifications for using Clang as a frontend for the TI
+C64x+ VLIW processor.
+
+It is based on the initial contribution by Jeremy Morse[1], available at
+git.srobo.org.
+
+Maintained by members of the EPICOpt[2] team, at the Vienna University of
+Technology.
+
+--------------------------------
+
+[1] http://permalink.gmane.org/gmane.comp.compilers.llvm.devel/33870
+[2] http://www.complang.tuwien.ac.at/epicopt/
+

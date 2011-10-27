@@ -393,6 +393,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   DefineTypeWidth("__PTRDIFF_WIDTH__", TI.getPtrDiffType(0), TI, Builder);
   DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Builder);
   DefineTypeWidth("__INTPTR_WIDTH__", TI.getIntPtrType(), TI, Builder);
+
+  // added to support TMS320C64X
+  DefineType("__SIZE_T_TYPE__", TI.getSizeType(), Builder);
+  DefineTypeWidth("__SIZE_WIDTH__", TI.getSizeType(), TI, Builder);
+  DefineType("__WCHAR_T_TYPE__", TI.getWCharType(), Builder);
+
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Builder);
   DefineTypeWidth("__SIZE_WIDTH__", TI.getSizeType(), TI, Builder);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Builder);
